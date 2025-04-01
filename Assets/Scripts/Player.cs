@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    private Vector3 direction;
+    public Vector3 direction;
     [SerializeField] float gravity = 5f;
     [SerializeField] float strength = 5f;
-    [SerializeField] AudioClip deathSound; // Assign the death sound clip in the Inspector
+    public AudioClip deathSound; // Assign the death sound clip in the Inspector
 
     private void Update()
     {
@@ -33,7 +33,7 @@ public class Player : MonoBehaviour
         transform.position = position;
         direction = Vector3.zero;
     }
-    private void OnTriggerEnter2D(Collider2D collision)
+    public void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Obstacle"))
         {
@@ -43,6 +43,14 @@ public class Player : MonoBehaviour
         else if (collision.CompareTag("Scoring"))
         {
             FindObjectOfType<GameManager>().IncreaseScore();
+        }
+    }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Obstacle"))
+        {
+            PlaySound(deathSound);
+            FindObjectOfType<GameManager>().GameOver();
         }
     }
     private void PlaySound(AudioClip clip)

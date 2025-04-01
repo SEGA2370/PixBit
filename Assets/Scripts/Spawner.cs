@@ -4,22 +4,22 @@ using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] GameObject prefab;
-    [SerializeField] float spawnRete = 1f;
+    public GameObject prefab;
+    public float spawnRate = 1f;
     [SerializeField] float minHeight = -1f;
     [SerializeField] float maxHeight = 1f;
 
-    private void OnEnable()
+    public void OnEnable()
     {
-        InvokeRepeating(nameof(Spawn), spawnRete, spawnRete);
+        InvokeRepeating(nameof(Spawn), spawnRate, spawnRate);
     }
 
-    private void OnDisable()
+    public void OnDisable()
     {
         CancelInvoke(nameof(Spawn));
     }
 
-    private void Spawn()
+    public void Spawn()
     {
         GameObject pipes = Instantiate(prefab, transform.position, Quaternion.identity);
         pipes.transform.position += Vector3.up * Random.Range(minHeight, maxHeight);

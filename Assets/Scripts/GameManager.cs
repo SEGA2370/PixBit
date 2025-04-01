@@ -1,44 +1,61 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using static UnityEngine.UI.CanvasScaler;
+
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] Player player;
-    [SerializeField] TextMeshProUGUI scoreText;
-    [SerializeField] TextMeshProUGUI bestScoreText;
-    [SerializeField] TextMeshProUGUI overallScoreText;
-    [SerializeField] GameObject gameOver;
+    public static event System.Action OnGameOver;
+
+    public Player player;
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI bestScoreText;
+    public TextMeshProUGUI overallScoreText;
+    public GameObject gameOver;
     [SerializeField] Parallax parallax;
-    [SerializeField] AudioClip audioClip;
-    [SerializeField] GameObject characterSelectionPanel;
+    public AudioClip audioClip;
+    public GameObject characterSelectionPanel;
+    public AudioSource audioSource;
+    public bool enableAudio = true;
+
 
     [Header("PlayerSelection")]
     private Player playerInstance;
     public static GameManager Instance { get; private set; }
 
-    private AudioSource audioSource;
-    private int score;
-    private int bestScore;
-    private int overallScore;
 
-    private void Awake()
+    public int score;
+    public int bestScore;
+    public int overallScore;
+
+    public void Awake()
     {
         Application.targetFrameRate = 60;
 
-        audioSource = gameObject.AddComponent<AudioSource>();
-        audioSource.clip = audioClip;
-        audioSource.playOnAwake = false;
+        /*        // Handle singleton pattern
+                if (Instance == null)
+                {
+                    Instance = this;
+                    // Only use DontDestroyOnLoad in actual game
+                    if (!IsInTestMode())
+                    {
+                        DontDestroyOnLoad(gameObject);
+                    }
+                }
+                else
+                {
+                    Destroy(gameObject);
+                    return;
+                }*/
 
-        if (Instance == null)
+        if (gameOver != null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            gameOver.SetActive(false);
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
 
         Pause();
 
@@ -47,6 +64,29 @@ public class GameManager : MonoBehaviour
         overallScore = PlayerPrefs.GetInt("OverallScore", 0); // Load overall score from PlayerPrefs
         UpdateBestScoreText(); // Update the UI to show the best score
         UpdateOverallScoreText(); // Update the UI to show the overall score to show the best score
+    }
+
+    private bool IsInTestMode()
+    {
+#if UNITY_INCLUDE_TESTS
+        return true;
+#else
+        return false;
+#endif
+    }
+    public static void ResetInstance()
+    {
+        if (Instance != null)
+        {
+            Destroy(Instance.gameObject);
+            Instance = null;
+        }
+    }
+
+    // Public method to access the audioSource for testing
+    public AudioSource GetAudioSource()
+    {
+        return audioSource;
     }
 
     public void SetPlayerCharacter(GameObject characterPrefab)
@@ -70,9 +110,15 @@ public class GameManager : MonoBehaviour
         characterSelectionPanel.SetActive(false);
 
         Time.timeScale = 1;
-        player.enabled = true;
+        if (player != null)
+        {
+            player.enabled = true;
+        }
 
-        playerInstance.transform.position = new Vector3(-3.5f, 0f, 0f);
+        if (playerInstance != null)
+        {
+            playerInstance.transform.position = new Vector3(-3.5f, 0f, 0f);
+        }
 
         Pipes[] pipes = FindObjectsOfType<Pipes>();
         foreach (var pipe in pipes)
@@ -81,14 +127,16 @@ public class GameManager : MonoBehaviour
         }
 
         parallax?.ResetMaterial();
-
         PlayAudio();
     }
 
     public void Pause()
     {
         Time.timeScale = 0;
-        player.enabled = false;
+        if (player != null) //  Prevents NullReferenceException
+        {
+            player.enabled = false;
+        }
     }
 
     public void GameOver()
@@ -108,7 +156,7 @@ public class GameManager : MonoBehaviour
         UpdateOverallScoreText(); // Update the UI to show the overall score
 
         StartCoroutine(DelayedGameOverUI());
-        
+        OnGameOver?.Invoke();
         StopAudio();
     }
 
@@ -128,20 +176,53 @@ public class GameManager : MonoBehaviour
 
     private void UpdateBestScoreText()
     {
-        bestScoreText.text = "Best Score: " + bestScore.ToString(); // Update the best score UI
+        if (bestScoreText != null)
+        {
+            bestScoreText.text = "Best Score: " + bestScore.ToString();
+        }
+        else
+        {
+            Debug.LogWarning("bestScoreText is not assigned in GameManager");
+        } // Update the best score UI
     }
 
     private void UpdateOverallScoreText()
     {
-        overallScoreText.text = "Overall Score: " + overallScore.ToString(); // Update the overall score UI
+        if (overallScoreText != null)
+        {
+            overallScoreText.text = "Overall Score: " + overallScore.ToString();
+        }
+        else
+        {
+            Debug.LogWarning("overallScoreText is not assigned in GameManager");
+        }
     }
 
     private void PlayAudio()
     {
-        if (audioSource != null && audioClip != null)
+        if (!enableAudio) return;
+
+        if (audioSource == null)
         {
-            audioSource.Play();
+            audioSource = gameObject.AddComponent<AudioSource>();
         }
+
+        if (audioClip == null)
+        {
+            Debug.LogWarning("No audio clip assigned to GameManager");
+            return;
+        }
+
+        audioSource.enabled = true;
+        audioSource.clip = audioClip;
+        audioSource.loop = true;
+        audioSource.volume = 1f;
+
+        Debug.Log($"Attempting to play audio. Enabled: {audioSource.enabled}, Clip: {audioClip.name}");
+        audioSource.Play();
+
+        audioSource.ignoreListenerPause = true;
+        AudioListener.pause = false;
     }
 
     private void StopAudio()

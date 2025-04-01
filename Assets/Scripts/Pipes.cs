@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class Pipes : MonoBehaviour
 {
-    [SerializeField] float speed = 5f;
+    public float speed = 5f;
     private float leftEdge;
 
     private void Start()
     {
-        leftEdge = Camera.main.ScreenToWorldPoint(Vector3.zero).x - 6f;
+        if (Camera.main != null)
+        {
+            leftEdge = Camera.main.ScreenToWorldPoint(Vector3.zero).x - 6f;
+        }
     }
 
     private void Update()
