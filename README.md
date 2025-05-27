@@ -1,6 +1,6 @@
 # 🐤 PixBit – The Ultimate Flappy Bird Tribute
 
-<img src="Assets/Images/pixbit_preview.jpg" alt="PixBit Gameplay Preview" width="600"/>
+<img src="Assets/Sprites/pixbit.jpg" width="600"/>
 
 ## 🎮 Game Overview
 
