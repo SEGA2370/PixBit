@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
     public GameObject characterSelectionPanel;
     public AudioSource audioSource;
     public bool enableAudio = true;
+    private Spawner spawner;
 
 
     [Header("PlayerSelection")]
@@ -33,21 +34,23 @@ public class GameManager : MonoBehaviour
     {
         Application.targetFrameRate = 60;
 
-        /*        // Handle singleton pattern
-                if (Instance == null)
-                {
-                    Instance = this;
-                    // Only use DontDestroyOnLoad in actual game
-                    if (!IsInTestMode())
-                    {
-                        DontDestroyOnLoad(gameObject);
-                    }
-                }
-                else
-                {
-                    Destroy(gameObject);
-                    return;
-                }*/
+        spawner = FindObjectOfType<Spawner>();
+
+        // Handle singleton pattern
+        if (Instance == null)
+        {
+            Instance = this;
+            // Only use DontDestroyOnLoad in actual game
+            if (!IsInTestMode())
+            {
+                DontDestroyOnLoad(gameObject);
+            }
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
 
         if (gameOver != null)
         {
@@ -127,7 +130,8 @@ public class GameManager : MonoBehaviour
         }
 
         parallax?.ResetMaterial();
-        PlayAudio();
+
+        spawner?.StartSpawning();
     }
 
     public void Pause()
@@ -158,6 +162,8 @@ public class GameManager : MonoBehaviour
         StartCoroutine(DelayedGameOverUI());
         OnGameOver?.Invoke();
         StopAudio();
+
+        spawner?.StopSpawning();
     }
 
     private IEnumerator DelayedGameOverUI()
